@@ -3,15 +3,15 @@ kind: HTTPRoute
 metadata:
   name: fitness-tracker-route
   namespace: gateway-ns
-specs:
+spec:
   parentRefs:
     - name: asad-gateway
       namespace: gateway-ns
   rules:
     - matches:
-      - path:
-          type: PathPrefix
-          value: /fitness
+        - path:
+            type: PathPrefix
+            value: /fitness
       filters:
         - type: URLRewrite
           urlRewrite:
@@ -22,4 +22,3 @@ specs:
         - name: fitness-tracker-service
           namespace: gateway-ns
           port: 80
-              
