@@ -46,6 +46,23 @@ spec:
               value: "fitness-tracker-app"
             - name: DD_VERSION
               value: "1.0.0"
+          # ✅ CRITICAL FIX
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          # ✅ Recommended
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
 ---
 
 apiVersion: v1
