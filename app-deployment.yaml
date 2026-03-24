@@ -5,6 +5,11 @@ metadata:
   namespace: gateway-ns
 spec:
   replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   selector:
     matchLabels:
       app: fitness-tracker-app
@@ -22,6 +27,13 @@ spec:
           image: pulkit197/fitness_tracker-master-copy3-fitness-app:latest
           ports:
             - containerPort: 5000
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "200m"
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
 
           env:
             #  From ConfigMap
@@ -67,14 +79,14 @@ spec:
                   name: fitness-config
                   key: DD_VERSION
 
-            # 🔹 From Secret
+            #  From Secret
             - name: MONGODB_URI
               valueFrom:
                 secretKeyRef:
                   name: fitness-secret
                   key: MONGODB_URI
 
-            # 🔹 Dynamic (keep as-is)
+            #  Dynamic (keep as-is)
             - name: DD_AGENT_HOST
               valueFrom:
                 fieldRef:
