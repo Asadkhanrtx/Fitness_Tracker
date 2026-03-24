@@ -22,31 +22,64 @@ spec:
           image: pulkit197/fitness_tracker-master-copy3-fitness-app:latest
           ports:
             - containerPort: 5000
-          # ✔ All configMap vars removed
-          # ✔ Direct env variables added
+
           env:
-            - name: MONGODB_URI
-              value: "mongodb://mongodb-service:27017/fitness-tracker"
+            # 🔹 From ConfigMap
             - name: PORT
-              value: "5000"
+              valueFrom:
+                configMapKeyRef:
+                  name: fitness-config
+                  key: PORT
+
             - name: HOST
-              value: "0.0.0.0"
+              valueFrom:
+                configMapKeyRef:
+                  name: fitness-config
+                  key: HOST
+
             - name: NODE_ENV
-              value: "production"
-            # Datadog APM (tracing) env variables
+              valueFrom:
+                configMapKeyRef:
+                  name: fitness-config
+                  key: NODE_ENV
+
+            - name: DD_TRACE_AGENT_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: fitness-config
+                  key: DD_TRACE_AGENT_PORT
+
+            - name: DD_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: fitness-config
+                  key: DD_ENV
+
+            - name: DD_SERVICE
+              valueFrom:
+                configMapKeyRef:
+                  name: fitness-config
+                  key: DD_SERVICE
+
+            - name: DD_VERSION
+              valueFrom:
+                configMapKeyRef:
+                  name: fitness-config
+                  key: DD_VERSION
+
+            # 🔹 From Secret
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: fitness-secret
+                  key: MONGODB_URI
+
+            # 🔹 Dynamic (keep as-is)
             - name: DD_AGENT_HOST
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
-            - name: DD_TRACE_AGENT_PORT
-              value: "8126"
-            - name: DD_ENV
-              value: "production"
-            - name: DD_SERVICE
-              value: "fitness-tracker-app"
-            - name: DD_VERSION
-              value: "1.0.0"
-          # ✅ CRITICAL FIX
+
           readinessProbe:
             httpGet:
               path: /
@@ -55,7 +88,7 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 2
             failureThreshold: 3
-          # ✅ Recommended
+
           livenessProbe:
             httpGet:
               path: /
