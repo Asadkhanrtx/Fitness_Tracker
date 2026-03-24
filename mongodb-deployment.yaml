@@ -58,11 +58,6 @@ metadata:
   namespace: gateway-ns
 spec:
   replicas: 1
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
   selector:
     matchLabels:
       app: mongodb
@@ -72,8 +67,8 @@ spec:
         app: mongodb
     spec:
       containers:
-      
-      # ✅ MongoDB Container
+
+      # MongoDB
       - name: mongodb
         image: mongo:7-jammy
         ports:
@@ -81,34 +76,31 @@ spec:
         resources:
           limits:
             memory: "512Mi"
-            cpu: "200m"
           requests:
             memory: "256Mi"
-            cpu: "100m"
         volumeMounts:
           - name: asad-data
             mountPath: /data/db
 
-      # 🔥 Memory Eater Sidecar (causes OOM)
+      # 🔥 Memory eater (FIXED)
       - name: memory-eater
-        image: bash
-        command: ["/bin/bash", "-c"]
+        image: busybox
+        command: ["/bin/sh", "-c"]
         args:
           - |
             echo "Starting memory eater...";
-            arr=();
+            i=0;
             while true; do
-              arr+=($(head -c 20M </dev/zero | tr '\0' 'a'));
-              echo "Allocated 20MB";
+              dd if=/dev/zero of=/tmp/file$i bs=10M count=1;
+              i=$((i+1));
+              echo "Allocated $i files";
               sleep 0.1;
             done
         resources:
           limits:
             memory: "300Mi"
-            cpu: "100m"
           requests:
             memory: "100Mi"
-            cpu: "50m"
 
       volumes:
         - name: asad-data
