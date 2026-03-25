@@ -11,7 +11,7 @@ spec:
     - matches:
         - path:
             type: PathPrefix
-            value: /Fitness
+            value: /FitnessTracker
       filters:
         - type: URLRewrite
           urlRewrite:
