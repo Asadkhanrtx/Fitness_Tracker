@@ -1,3 +1,16 @@
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: fitness-mongo-pv
+# spec:
+#   capacity:
+#     storage: 10Gi
+#     accessModes:
+#       - ReadWriteMany
+#     persistentVolumeReclaimPolicy: Retain
+#     nfs:
+#       path: /var/nfs/general
+#       server: 172.31.12.241
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -5,9 +18,12 @@ metadata:
 spec:
   capacity:
     storage: 10Gi
-    accessModes:
-      - ReadWriteMany
-    persistentVolumeReclaimPolicy: Retain
-    nfs:
-      path: /var/nfs/general
-      server: 172.31.12.241
+
+  accessModes:
+    - ReadWriteMany
+
+  persistentVolumeReclaimPolicy: Retain
+
+  nfs:
+    path: /var/nfs/general
+    server: 172.31.12.241
