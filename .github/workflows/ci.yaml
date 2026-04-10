@@ -15,6 +15,7 @@ jobs:
         with:
           fetch-depth: 0
 
+      # 🔍 SonarQube Scan
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:
@@ -24,6 +25,7 @@ jobs:
           args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
 
+      # ✅ Quality Gate Check
       - name: SonarQube Quality Gate Check
         id: sonarqube-quality-gate-check
         uses: SonarSource/sonarqube-quality-gate-action@v1
@@ -31,14 +33,29 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+      # ❌ Fail if Sonar fails
       - name: Fail pipeline if Quality Gate fails
         if: steps.sonarqube-quality-gate-check.outputs.quality-gate-status == 'FAILED'
         run: |
           echo "Quality Gate failed due to vulnerabilities"
           exit 1
 
+      # 🔐 Snyk SCA Scan (NEW)
+      - name: Snyk SCA Scan
+        uses: snyk/actions@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test --severity-threshold=high
+
+      # ❌ Fail if Snyk finds vulnerabilities (auto handled, but explicit)
+      - name: Fail if Snyk scan fails
+        if: failure()
+        run: exit 1
+
+      # 📧 Email on SUCCESS only
       - name: Send email on SUCCESS (No Vulnerabilities)
-        if: steps.sonarqube-quality-gate-check.outputs.quality-gate-status == 'PASSED'
+        if: success()
         uses: hilarion5/send-mail@v1
         with:
           smtp-server: smtp.gmail.com
@@ -47,11 +64,11 @@ jobs:
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           from-email: ${{ secrets.EMAIL_USERNAME }}
-          to-email: lijazsalim@gmail.com,asadchamp109@gmail.com,shoaibejaz.05001@gmail.com
-          subject: "SUCCESS: SonarQube Scan Passed"
+          to-email: lijazsalim@gmail.com,asadchamp109@gmail.com
+          subject: "SUCCESS: Pipeline Passed (SonarQube + Snyk)"
           html: |
             <h2 style="color:green;">Pipeline Successful</h2>
-            <p>No vulnerabilities found in SonarQube scan.</p>
+            <p>No vulnerabilities found in SonarQube and Snyk scans.</p>
 
             <p><b>Repository:</b> ${{ github.repository }}</p>
             <p><b>Branch:</b> ${{ github.ref_name }}</p>
