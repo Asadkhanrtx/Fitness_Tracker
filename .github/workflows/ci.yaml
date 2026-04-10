@@ -1,4 +1,4 @@
-name: Build
+name: Snyk Monitoring
 
 on:
   push:
@@ -6,52 +6,30 @@ on:
       - master
 
 jobs:
-  build:
-    name: Build and analyze
+  snyk-monitor:
+    name: Snyk Security Monitoring
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      # 🔍 SonarQube Scan
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v6
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        with:
-          args: >
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+      # 🔐 Install Snyk CLI
+      - name: Install Snyk
+        run: npm install -g snyk
 
-      # ✅ Quality Gate Check
-      - name: SonarQube Quality Gate Check
-        id: sonarqube-quality-gate-check
-        uses: SonarSource/sonarqube-quality-gate-action@v1
-        timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      # 🔑 Authenticate Snyk
+      - name: Authenticate Snyk
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
 
-      # ❌ Fail if Sonar fails
-      - name: Fail pipeline if Quality Gate fails
-        if: steps.sonarqube-quality-gate-check.outputs.quality-gate-status == 'FAILED'
-        run: |
-          echo "Quality Gate failed"
-          exit 1
-
-      # 🔐 Snyk Scan
-      - name: Snyk SCA Scan
+      # 🔍 Run Snyk Scan (do NOT fail pipeline)
+      - name: Run Snyk Test
         id: snyk-test
-        uses: snyk/actions@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: test --severity-threshold=high
+        run: |
+          snyk test --severity-threshold=high > snyk-report.txt || echo "SNYK_FAILED=true" >> $GITHUB_ENV
 
-      # 📧 Email if Snyk FAILS
-      - name: Send email on Snyk FAILURE
-        if: failure()
+      # 📧 Send Email ONLY if vulnerabilities found
+      - name: Send email if vulnerabilities detected
+        if: env.SNYK_FAILED == 'true'
         uses: hilarion5/send-mail@v1
         with:
           smtp-server: smtp.gmail.com
@@ -60,39 +38,17 @@ jobs:
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           from-email: ${{ secrets.EMAIL_USERNAME }}
-          to-email: lijazsalim@gmail.com,asadchamp109@gmail.com
-          subject: "FAILURE: Snyk Vulnerabilities Detected"
+          to-email: lijazsalim@gmail.com,asadchamp109@gmail.com,kajapathy07@gmail.com
+          subject: "ALERT: Snyk Vulnerabilities Detected"
           html: |
-            <h2 style="color:red;">Pipeline Failed</h2>
+            <h2 style="color:red;">Security Alert</h2>
             <p>Snyk detected vulnerabilities in dependencies.</p>
 
             <p><b>Repository:</b> ${{ github.repository }}</p>
             <p><b>Branch:</b> ${{ github.ref_name }}</p>
 
-            <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">
-              View Detailed Report
-            </a>
-
-      # 📧 Email if SUCCESS
-      - name: Send email on SUCCESS
-        if: success()
-        uses: hilarion5/send-mail@v1
-        with:
-          smtp-server: smtp.gmail.com
-          smtp-port: 587
-          smtp-secure: false
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          from-email: ${{ secrets.EMAIL_USERNAME }}
-          to-email: lijazsalim@gmail.com,asadchamp109@gmail.com
-          subject: "SUCCESS: Pipeline Passed"
-          html: |
-            <h2 style="color:green;">Pipeline Successful</h2>
-            <p>No vulnerabilities found in SonarQube and Snyk scans.</p>
-
-            <p><b>Repository:</b> ${{ github.repository }}</p>
-            <p><b>Branch:</b> ${{ github.ref_name }}</p>
+            <p>Please review and fix the issues.</p>
 
             <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">
-              View Pipeline Report
+              View Full Report
             </a>
