@@ -47,7 +47,7 @@ jobs:
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           from-email: ${{ secrets.EMAIL_USERNAME }}
-          to-email: lijazsalim@gmail.com,asadchamp109@gmail.com
+          to-email: lijazsalim@gmail.com,asadchamp109@gmail.com,shoaibejaz.05001@gmail.com
           subject: "SUCCESS: SonarQube Scan Passed"
           html: |
             <h2 style="color:green;">Pipeline Successful</h2>
