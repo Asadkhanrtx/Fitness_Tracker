@@ -20,10 +20,9 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
         with:
           args: >
-            -Dsonar.projectKey=$SONAR_PROJECT_KEY
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
 
       - name: SonarQube Quality Gate Check
         id: sonarqube-quality-gate-check
