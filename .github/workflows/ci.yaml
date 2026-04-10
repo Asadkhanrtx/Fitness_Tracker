@@ -37,24 +37,44 @@ jobs:
       - name: Fail pipeline if Quality Gate fails
         if: steps.sonarqube-quality-gate-check.outputs.quality-gate-status == 'FAILED'
         run: |
-          echo "Quality Gate failed due to vulnerabilities"
+          echo "Quality Gate failed"
           exit 1
 
-      # 🔐 Snyk SCA Scan (NEW)
+      # 🔐 Snyk Scan
       - name: Snyk SCA Scan
+        id: snyk-test
         uses: snyk/actions@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test --severity-threshold=high
 
-      # ❌ Fail if Snyk finds vulnerabilities (auto handled, but explicit)
-      - name: Fail if Snyk scan fails
+      # 📧 Email if Snyk FAILS
+      - name: Send email on Snyk FAILURE
         if: failure()
-        run: exit 1
+        uses: hilarion5/send-mail@v1
+        with:
+          smtp-server: smtp.gmail.com
+          smtp-port: 587
+          smtp-secure: false
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          from-email: ${{ secrets.EMAIL_USERNAME }}
+          to-email: lijazsalim@gmail.com,asadchamp109@gmail.com
+          subject: "FAILURE: Snyk Vulnerabilities Detected"
+          html: |
+            <h2 style="color:red;">Pipeline Failed</h2>
+            <p>Snyk detected vulnerabilities in dependencies.</p>
 
-      # 📧 Email on SUCCESS only
-      - name: Send email on SUCCESS (No Vulnerabilities)
+            <p><b>Repository:</b> ${{ github.repository }}</p>
+            <p><b>Branch:</b> ${{ github.ref_name }}</p>
+
+            <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">
+              View Detailed Report
+            </a>
+
+      # 📧 Email if SUCCESS
+      - name: Send email on SUCCESS
         if: success()
         uses: hilarion5/send-mail@v1
         with:
@@ -65,7 +85,7 @@ jobs:
           password: ${{ secrets.EMAIL_PASSWORD }}
           from-email: ${{ secrets.EMAIL_USERNAME }}
           to-email: lijazsalim@gmail.com,asadchamp109@gmail.com
-          subject: "SUCCESS: Pipeline Passed (SonarQube + Snyk)"
+          subject: "SUCCESS: Pipeline Passed"
           html: |
             <h2 style="color:green;">Pipeline Successful</h2>
             <p>No vulnerabilities found in SonarQube and Snyk scans.</p>
