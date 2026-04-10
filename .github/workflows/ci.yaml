@@ -28,7 +28,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      - name: Fail pipeline if Quality Gate fails
+      - name: Fail pipeline if Quality Gate failed
         if: steps.sonarqube-quality-gate-check.outputs.quality-gate-status == 'FAILED'
         run: |
           echo "Quality Gate failed due to vulnerabilities"
