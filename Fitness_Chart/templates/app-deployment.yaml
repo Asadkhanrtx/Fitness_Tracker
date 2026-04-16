@@ -2,8 +2,14 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: fitness-tracker-app
+  namespace: asad-ns
 spec:
   replicas: 2
+  strategy:
+    blueGreen:
+      activeService: fitness-active
+      previewService: fitness-preview
+      autoPromotionEnabled: true
   selector:
     matchLabels:
       app: fitness-tracker-app
@@ -45,12 +51,26 @@ spec:
               value: "fitness-tracker-app"
             - name: DD_VERSION
               value: "1.0.0"
---- 
-
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: fitness-tracker-service
+  name: fitness-active
+  namespace: asad-ns
+spec:
+  selector:
+    app: fitness-tracker-app
+  ports:
+  - port: 80
+    targetPort: 5000
+  type: NodePort
+  
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fitness-preview
+  namespace: asad-ns
 spec:
   selector:
     app: fitness-tracker-app
